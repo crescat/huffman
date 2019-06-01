@@ -22,12 +22,9 @@ def bytes_to_bits(stream, padding):
     return result[:-padding]
 
 
-def compress(filename, output_filename):
-    f1 = open(filename, 'rb')
-    f2 = open(output_filename, 'wb')
-    data = f1.read()
-    tree = make_tree(data)
-    bytes_data, padding = bits_to_bytes(encode(data))
+def compress(byte_stream):
+    tree = make_tree(byte_stream)
+    bytes_data, padding = bits_to_bytes(encode(byte_stream))
     pickled_tree = pickle.dumps(tree)
 
     data_len = len(bytes_data)
@@ -35,20 +32,34 @@ def compress(filename, output_filename):
     packed_data = struct.pack(f"III{tree_len}s{data_len}B",\
                               data_len, padding, tree_len, \
                               pickled_tree, *bytes_data)
-    f2.write(packed_data)
+
+    return packed_data
 
 
-def decompress(filename, output_filename):
-    f1 = open(filename, 'rb')
-    f2 = open(output_filename, 'wb')
-
-    data = f1.read()
-
-    data_len, padding, tree_len = struct.unpack(f"III", data[:12])
-    tree = pickle.loads(struct.unpack(f"{tree_len}s", data[12:12+tree_len])[0])
-    unpacked_data = list(struct.unpack(f"{data_len}B", data[12+tree_len:]))
+def decompress(byte_stream):
+    data_len, padding, tree_len = struct.unpack(f"III", byte_stream[:12])
+    tree = pickle.loads(struct.unpack(f"{tree_len}s", byte_stream[12:12+tree_len])[0])
+    unpacked_data = list(struct.unpack(f"{data_len}B", byte_stream[12+tree_len:]))
     result = decode(tree, bytes_to_bits(unpacked_data, padding))
-    f2.write(result)
 
-import cProfile
-cProfile.run("compress('shakespeare.txt', 'shakespeare_compress'); decompress('shakespeare_compress', 'shakespeare_decompress.txt')", sort = 'cumulative')
+    return result
+
+
+if __name__  == '__main__':
+    # trying compress
+    f1 = open('shakespeare.txt', 'rb')
+    f2 = open('shakespeare_compressed', 'wb')
+    data = f1.read()
+    compressed_data = compress(data)
+    f2.write(compressed_data)
+    f1.close()
+    f2.close()
+
+    # trying decompress
+    f1 = open('shakespeare_compressed', 'rb')
+    f2 = open('shakespeare_decompressed.txt', 'wb')
+    data = f1.read()
+    decompressed_data = decompress(data)
+    f2.write(decompressed_data)
+    f1.close()
+    f2.close()
