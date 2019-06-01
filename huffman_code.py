@@ -1,5 +1,6 @@
 from collections import Counter
 import struct
+import array
 
 def add_item(queue, item):
     return sorted(queue+[item], key = lambda x:x[0])
@@ -13,14 +14,14 @@ def make_tree(doc):
     while len(queue) >= 2:
         f1, b1 = queue[0]
         f2, b2 = queue[1]
-        queue = add_item(queue[2:], (f1+f2, (b1, b2)))
+        queue = add_item(queue[2:], (f1+f2, {0:b1, 1:b2}))
     return queue[0][1]
 
 
 def tree_to_table(tree):
     if type(tree) is int:
         return [([], tree)]
-    elif type(tree) is tuple:
+    elif type(tree) is dict:
         left = tree_to_table(tree[0])
         right = tree_to_table(tree[1])
         return [([0]+num, char) for num, char in left] +\
@@ -39,12 +40,12 @@ def encode(doc):
 
 def decode(tree, encoded_doc):
     cursor = tree
-    result = b''
+    result = array.array('B')
     for x in encoded_doc:
         cursor = cursor[x]
 
         if type(cursor) is int:
-            result += struct.pack(f"B", cursor)
+            result.append(cursor)
             cursor = tree
 
-    return result
+    return result.tobytes()

@@ -1,6 +1,7 @@
 from huffman_code import *
 import struct
 import pickle
+import array
 
 def bits_to_bytes(bits):
     length = len(bits)
@@ -14,7 +15,7 @@ def bits_to_bytes(bits):
 
 
 def bytes_to_bits(stream, padding):
-    result = []
+    result = array.array('B')
     for byte in stream:
         for bit in bin(byte)[2:].rjust(8, '0'):
             result.append(int(bit))
@@ -49,5 +50,5 @@ def decompress(filename, output_filename):
     result = decode(tree, bytes_to_bits(unpacked_data, padding))
     f2.write(result)
 
-compress('cat.jpg', 'cat_compress')
-decompress('cat_compress', 'cat_decompress.jpg')
+import cProfile
+cProfile.run("compress('shakespeare.txt', 'shakespeare_compress'); decompress('shakespeare_compress', 'shakespeare_decompress.txt')", sort = 'cumulative')
