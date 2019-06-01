@@ -1,8 +1,7 @@
-from huffman_code import *
+from huffman import *
 import struct
 import pickle
 import array
-import sys
 
 def bits_to_bytes(bits):
     length = len(bits)
@@ -44,47 +43,3 @@ def decompress(byte_stream):
     result = decode(tree, bytes_to_bits(unpacked_data, padding))
 
     return result
-
-
-def test_with_shakespeare():
-    # trying compress
-    f1 = open('shakespeare.txt', 'rb')
-    f2 = open('shakespeare_compressed', 'wb')
-    data = f1.read()
-    compressed_data = compress(data)
-    f2.write(compressed_data)
-    f1.close()
-    f2.close()
-
-    # trying decompress
-    f1 = open('shakespeare_compressed', 'rb')
-    f2 = open('shakespeare_decompressed.txt', 'wb')
-    data = f1.read()
-    decompressed_data = decompress(data)
-    f2.write(decompressed_data)
-    f1.close()
-    f2.close()
-
-def run_with_sys_argv(args):
-    if args[1] not in ['compress', 'decompress']:
-        raise Exception('something wrong!')
-    f1 = open(args[2], 'rb')
-    f2 = open(args[3], 'wb')
-    data = f1.read()
-    if args[1] == 'compress':
-        processed_data = compress(data)
-    elif args[1] == 'decompress':
-        processed_data = decompress(data)
-    f2.write(processed_data)
-    f1.close()
-    f2.close()
-
-
-if __name__  == '__main__':
-    if len(sys.argv) == 4:
-        run_with_sys_argv(sys.arg)
-    else:
-        print(f"""
-        Usage: {sys.argv[0]} ACTION <INPUT FILE> <OUTPUT FILE>
-        ACTION: compress, decompress
-        """)
