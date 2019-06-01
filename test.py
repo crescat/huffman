@@ -12,15 +12,28 @@ def bits_to_bytes(bits):
     return result, padding
 
 
+def bytes_to_bits(stream, padding):
+    result = []
+    for byte in stream:
+        for bit in bin(byte)[2:].rjust(8, '0'):
+            result.append(int(bit))
+    return result[:-padding]
+
+
 f1 = open('cat.jpg', 'rb')
-f2 = open('cat2', 'wb')
 
 data = f1.read()
+
 tree = make_tree(data)
-huff_data = encode(data)
-bytes_data, padding = bits_to_bytes(huff_data)
+bytes_data, padding = bits_to_bytes(encode(data))
+
 L = len(bytes_data)
-packed_data = struct.pack(f"I{L}B", L, *bytes_data)
-a = struct.unpack(f"I", packed_data[:4])
-unpacked_data = struct.unpack(f"{a[0]}B", packed_data[4:])
-print(unpacked_data)
+packed_data = struct.pack(f"II{L}B", L, padding, *bytes_data)
+
+
+### from now on, only 'packed_data' is usable
+a, b = struct.unpack(f"II", packed_data[:8])
+
+unpacked_data = list(struct.unpack(f"{a}B", packed_data[8:]))
+
+print(data == decode(tree, bytes_to_bits(unpacked_data, b)))

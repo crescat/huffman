@@ -1,4 +1,5 @@
 from collections import Counter
+import struct
 
 def add_item(queue, item):
     return sorted(queue+[item], key = lambda x:x[0])
@@ -38,12 +39,12 @@ def encode(doc):
 
 def decode(tree, encoded_doc):
     cursor = tree
-    result = ''
+    result = b''
     for x in encoded_doc:
         cursor = cursor[x]
 
         if type(cursor) is int:
-            result += cursor
+            result += struct.pack(f"B", cursor)
             cursor = tree
 
     return result
