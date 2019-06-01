@@ -21,23 +21,33 @@ def bytes_to_bits(stream, padding):
     return result[:-padding]
 
 
-f1 = open('cat.jpg', 'rb')
+def compress(filename, output_filename):
+    f1 = open(filename, 'rb')
+    f2 = open(output_filename, 'wb')
+    data = f1.read()
+    tree = make_tree(data)
+    bytes_data, padding = bits_to_bytes(encode(data))
+    pickled_tree = pickle.dumps(tree)
 
-data = f1.read()
-
-tree = make_tree(data)
-bytes_data, padding = bits_to_bytes(encode(data))
-
-L = len(bytes_data)
-pickled_tree = pickle.dumps(tree)
-P = len(pickled_tree)
-packed_data = struct.pack(f"III{P}s{L}B", L, padding, P, pickled_tree, *bytes_data)
+    data_len = len(bytes_data)
+    tree_len = len(pickled_tree)
+    packed_data = struct.pack(f"III{tree_len}s{data_len}B",\
+                              data_len, padding, tree_len, \
+                              pickled_tree, *bytes_data)
+    f2.write(packed_data)
 
 
-### from now on, only 'packed_data' is usable
-a, b, c = struct.unpack(f"III", packed_data[:12])
-unpacked_tree = pickle.loads(struct.unpack(f"{c}s", packed_data[12:12+c])[0])
-print(unpacked_tree)
-unpacked_data = list(struct.unpack(f"{a}B", packed_data[12+c:]))
+def decompress(filename, output_filename):
+    f1 = open(filename, 'rb')
+    f2 = open(output_filename, 'wb')
 
-print(data == decode(unpacked_tree, bytes_to_bits(unpacked_data, b)))
+    data = f1.read()
+
+    data_len, padding, tree_len = struct.unpack(f"III", data[:12])
+    tree = pickle.loads(struct.unpack(f"{tree_len}s", data[12:12+tree_len])[0])
+    unpacked_data = list(struct.unpack(f"{data_len}B", data[12+tree_len:]))
+    result = decode(tree, bytes_to_bits(unpacked_data, padding))
+    f2.write(result)
+
+compress('cat.jpg', 'cat_compress')
+decompress('cat_compress', 'cat_decompress.jpg')
